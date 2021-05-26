@@ -118,7 +118,7 @@ Shinyserver <- function(input, output, session) {
             fluidRow(leafletOutput("map", height = 950, width = "97%"))
         )
     })
-    
+     
     ##### Sidebar #####
     output$sidebar <- renderUI({
         div(width = 200, height = 1, shinyjs::useShinyjs(), id="side-panel",
