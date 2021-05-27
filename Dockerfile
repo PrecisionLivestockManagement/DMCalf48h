@@ -2,7 +2,7 @@ FROM asia.gcr.io/datamusterapp/datamuster/rbase
 
 
 
-RUN R -e "install.packages('lubridate')"
+RUN R -e "install.packages('lubridate', 'shiny','leaflet', 'mongolite', 'dplyr','DT','shinyWidgets')"
 
 # copy the app to the image
 RUN mkdir /root/DataMusterApp
