@@ -6,7 +6,7 @@ RUN R -e "install.packages('lubridate')"
 
 # copy the app to the image
 RUN mkdir /root/DataMusterApp
-COPY DataMusterApp /root/DataMuster48h
+COPY Webapp /root/DataMuster48h
 
 
 
