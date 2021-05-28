@@ -17,4 +17,4 @@ COPY Rprofile.site /usr/lib/R/etc/
 
 EXPOSE 3838
 
-CMD ["R", "-e", "shiny::runApp('/root/DataMuster48h')"]
+CMD ["R", "-e", "shiny::runApp('/root/DataMuster48h, options = list(port = '3838')')"]
