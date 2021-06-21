@@ -10,6 +10,8 @@ library(lubridate)
 ##### Shiny server #####
 Shinyserver <- function(input, output, session) {
     
+    # user <<- "ThomasWilliams"
+    # pass <<- "Datamuster"
     user <<- as.character(Sys.getenv("user"))
     pass <<- as.character(Sys.getenv("pass"))
     
@@ -20,8 +22,9 @@ Shinyserver <- function(input, output, session) {
     timer <- df %>%
         slice(which.max(date))
     timer <<- timer
-    datatabledownload <- df[,c(1:3)]
-    colnames(datatabledownload) <- c("Timestamp", "Latitude", "Longitude")
+    datatabledownload <- df[,c(1:3,6)]
+    colnames(datatabledownload) <- c("Timestamp", "Latitude", "Longitude", "ID")
+    df <- df %>% mutate(ID = if_else(ID == "3G", "3G", "IoT"))
     
     
     ##### Modal #####
@@ -46,26 +49,59 @@ Shinyserver <- function(input, output, session) {
     
     
     ##### Data table #####
-    df <- df[order(df$date, decreasing = TRUE),]
-    df$time <- paste(df$date)
+    observeEvent(
+        {input$datechoice
+            input$tel_filter},{
+                
+        latest_dt <- 
+            df %>%
+            mutate(Timestamp = round_date(date, unit = "minute"),
+                   Longitude = round(Long, 3),
+                   Latitude = round(Lat, 3)) %>%
+            filter(Timestamp >= input$datechoice,
+                   Timestamp < input$datechoice + days(1),
+                   ID == input$tel_filter) %>% 
+            arrange(desc(date)) %>% 
+            select(Timestamp, Longitude, Latitude, ID)
+        latest_dt$Timestamp <- as.character(paste0(latest_dt$Timestamp))
+        
+        output$datatable <- renderDataTable(
+            datatable(latest_dt,
+                      rownames = FALSE, 
+                      options = list(columnDefs = list(list(className = 'dt-center', targets = 0:3)))
+            ))
+                 }
+    )
+        
     
-    output$datatable <- renderDataTable(datatable(tibble(
-        Timestamp = df$time,
-        Latitude = round(df$Lat, digits = 3),
-        Longitude = round(df$Long, digits = 5)),
-        rownames = FALSE, 
-        options = list(columnDefs = list(list(className = 'dt-center', targets = 0:2)))
-        ))
+#    df <- df[order(df$date, decreasing = TRUE),]
+#    df$time <- paste(df$date)
+    
+    # output$datatable <- renderDataTable(datatable(
+    #     tibble(
+    #         Timestamp = df$time,
+    #         Latitude = round(df$Lat, digits = 3),
+    #         Longitude = round(df$Long, digits = 5),
+    #         ID = df$ID),
+    #     rownames = FALSE, 
+    #     options = list(columnDefs = list(list(className = 'dt-center', targets = 0:3)))
+    #     ))
     
     ##### Map #####
-    observeEvent(input$datechoice, {
-        datetime <<- input$datechoice
+    
+
+    
+    observeEvent(
+        {input$datechoice
+            input$tel_filter},{
         
         latest <- df %>%
             mutate(date = round_date(date, unit = "minute")) %>%
-            filter(date == input$datechoice) %>%
+            filter(date >= input$datechoice,
+                   date < input$datechoice + days(1),
+                   ID == input$tel_filter)
             # filter(date == as.POSIXct("2021-05-26 15:16:00")) %>%
-            slice_head(n = 1)
+            # slice_head(n = 1)
         latest <<- latest
         
         if(nrow(latest) == 0){
@@ -83,6 +119,7 @@ Shinyserver <- function(input, output, session) {
                                      fillColor = "#d52a2e",
                                      popup = paste(paste("Latitude:", round(latest$Lat, digits = 5)),
                                                    paste("Longitude:", round(latest$Long, digits = 5)),
+                                                   paste("Time: ", latest$date),
                                                    sep = "</br>"))
             })
         }
@@ -126,12 +163,13 @@ Shinyserver <- function(input, output, session) {
                      column(width = 12, align = "center", airDatepickerInput("datechoice", label = "Date for visualisation:",
                                                                              addon = 'none', width ='50%',
                                                                              # autoClose = TRUE,
-                                                                             dateFormat = "dd M yyyy",
+                                                                             dateFormat = "dd MM yyyy",
                                                                              value = round_date(timer$date, unit = "minute"),
                                                                              # value = as.POSIXct(timed, format = "%Y-%m-%d %H:%M:%S"),
                                                                              update_on = "close",
-                                                                             timepicker = TRUE, timepickerOpts = timepickerOptions(hoursStep = "1",
+                                                                             timepicker = FALSE, timepickerOpts = timepickerOptions(hoursStep = "1",
                                                                                                                                    minutesStep = "1")))),
+            fluidRow(column(width = 12, align = "center", radioButtons("tel_filter", label = "Select telemetry type:", choices = c("IoT", "3G"), inline = TRUE)), style = "font-size: 100% ; width: 220%"),
             fluidRow(column(width = 12, align = "center", downloadButton("download", label = "Download data as csv", style = "color: #6d6e71")), style = "font-size: 100% ; width: 220%"),
             fluidRow(column(width = 12, div(style = "height:20px"))),
             fluidRow(column(width = 12, div(DTOutput("datatable", height = 480), style = "font-size: 100% ; width: 220%"))),
