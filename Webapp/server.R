@@ -61,7 +61,7 @@ Shinyserver <- function(input, output, session) {
                    ID == input$tel_filter) %>% 
             arrange(desc(date)) %>% 
             select(Timestamp, Longitude, Latitude, ID)
-            
+        latest_dt$Timestamp <- as.character(paste0(latest_dt$Timestamp))
         
         output$datatable <- renderDataTable(
             datatable(latest_dt,
@@ -167,7 +167,7 @@ Shinyserver <- function(input, output, session) {
                                                                              update_on = "close",
                                                                              timepicker = FALSE, timepickerOpts = timepickerOptions(hoursStep = "1",
                                                                                                                                    minutesStep = "1")))),
-            fluidRow(column(width = 12, align = "center", radioButtons("tel_filter", label = "Select Telemetry Type:", choices = c("IoT", "3G"), inline = TRUE)), style = "font-size: 100% ; width: 220%"),
+            fluidRow(column(width = 12, align = "center", radioButtons("tel_filter", label = "Select telemetry type:", choices = c("IoT", "3G"), inline = TRUE)), style = "font-size: 100% ; width: 220%"),
             fluidRow(column(width = 12, align = "center", downloadButton("download", label = "Download data as csv", style = "color: #6d6e71")), style = "font-size: 100% ; width: 220%"),
             fluidRow(column(width = 12, div(style = "height:20px"))),
             fluidRow(column(width = 12, div(DTOutput("datatable", height = 480), style = "font-size: 100% ; width: 220%"))),
